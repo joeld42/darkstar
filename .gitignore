@@ -1,3 +1,7 @@
+# FIPS stuff
+.fips-gen.py
+.fips-imports.cmake
+
 # Prerequisites
 *.d
 
