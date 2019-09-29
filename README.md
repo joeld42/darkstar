@@ -6,8 +6,8 @@ New attempt at a reasonable basecode, on top of Oryol engine.
 Why is it called DARKSTAR? Because "Darkstar crashes...".
 
 DARKSTAR is a codename for the project, and will be replaced by the template script. Originally
-I justed called it TEMPLATE but that had some name collisions so this time I'm going with something
-more unique and searchable.
+I just called it TEMPLATE but that had some name collisions so this time I'm going with something
+more unique and script-searchable.
 
 All WIP, not really working yet...
 
