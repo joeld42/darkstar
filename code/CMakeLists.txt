@@ -6,6 +6,7 @@ fips_begin_app(darkstar windowed)
 	          #SceneController.cpp SceneController.h 
 	          #GameScene.cpp GameScene.h
 	          #TitleScene.cpp TitleScene.h
+	          Renderizer.h Renderizer.cpp
 	          Camera.h Camera.cpp
 	          Ray.h Ray.cpp
 	          UIAssets.h UIAssets.cpp	          
@@ -15,6 +16,7 @@ fips_begin_app(darkstar windowed)
 
     		   )
     oryol_shader(shaders.glsl)
+    oryol_shader(shadow_shaders.glsl)
     oryol_shader(wireframe_shaders.glsl)
     fips_deps(Core IO LocalFS HttpFS Gfx Assets NKUI Dbg Input soloud)
 fips_end_app()

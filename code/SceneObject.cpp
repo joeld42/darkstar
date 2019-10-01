@@ -4,7 +4,9 @@
 #include "Gfx/Gfx.h"
 
 #include "shaders.h"
-#import "SceneObject.h"
+#include "shadow_shaders.h"
+
+#include "SceneObject.h"
 
 #include "IO/IO.h"
 #include "Core/String/StringBuilder.h"
@@ -33,7 +35,7 @@ SceneObject *makeObject( SceneMesh *mesh )
     object->mesh = mesh;
     object->hidden = false;
     object->collider = false;
-//    object->vsParams.tintColor = glm::vec4(1);
+	object->vsParams.tintColor = glm::vec4(1);
 //    object->tileVSParams.tintColor = glm::vec4(1);
 //    object->tileFSParams.decalColor = glm::vec4(1,1,0,1);
 //
@@ -258,6 +260,51 @@ void Scene::LoadScene( Oryol::StringAtom sceneName, Scene::LoadCompleteFunc load
       
         loadComplete( true );
     });
+}
+
+SceneMesh *
+Scene::BuildMesh( Oryol::String meshName,
+                 Oryol::Id texture,
+                 void *vertAndIndexData,
+                 int numVertData, int numIndexData, int replaceMeshIndex )
+{
+    SceneMesh mesh = {};
+    // TODO: calc bbox
+    //mesh.bboxMin =
+    //mesh.bboxMax =
+    
+    auto meshSetup = MeshSetup::FromData();
+    meshSetup.NumVertices = numVertData;
+    meshSetup.NumIndices = numIndexData;
+    
+    meshSetup.IndicesType = IndexType::Index16;
+    meshSetup.Layout = meshLayout;
+    
+    meshSetup.AddPrimitiveGroup({0, numIndexData });
+    meshSetup.VertexDataOffset = 0;
+    meshSetup.IndexDataOffset = sizeof(LDJamFileVertex) * numVertData;
+    
+    mesh.meshName = meshName;
+
+    size_t meshDataSize = (sizeof(LDJamFileVertex) * numVertData) + (sizeof(uint16_t) * numIndexData);
+    mesh.mesh = Gfx::CreateResource(meshSetup, vertAndIndexData, meshDataSize );
+
+    mesh.texture = texture;
+    mesh.numPrims = 1;
+    
+    
+    if ((replaceMeshIndex < 0) || (replaceMeshIndex > sceneMeshes.Size()) )
+    {
+        int nextMesh = sceneMeshes.Size();
+        sceneMeshes.Add( mesh );
+        return &(sceneMeshes[nextMesh]);
+    } else {
+        // TODO: free the old mesh
+        sceneMeshes[ replaceMeshIndex ] = mesh;
+        return &(sceneMeshes[replaceMeshIndex]);
+    }
+
+    
 
 }
 
@@ -299,8 +346,38 @@ void Scene::BringToFront( SceneObject *frontObj )
         }
     }
 }
+void Scene::drawShadowPass( Oryol::DrawState &shadowDrawState )
+{
+    // Draw all the world objects
+    for (int i=0; i < sceneObjs.Size(); i++) {
+        
+        SceneObject *obj = sceneObjs[i];
+        SceneMesh *mesh = obj->mesh;
 
-void Scene::drawScene()
+        if (obj->hidden) continue;
+        if (obj->handTile) continue;
+        
+        const auto resStateMesh = Gfx::QueryResourceInfo( mesh->mesh ).State;
+        // TODO Texture
+        
+        if (resStateMesh == ResourceState::Valid) {
+            shadowDrawState.Mesh[0] = mesh->mesh;
+        }
+        
+        
+        Gfx::ApplyDrawState( shadowDrawState );
+        Gfx::ApplyUniformBlock( obj->shadowVSParams);
+        //Gfx::ApplyUniformBlock( obj->vsParams);
+        //Gfx::ApplyUniformBlock( obj->fsParams);
+        
+        for (int j=0; j < mesh->numPrims; j++) {
+            Gfx::Draw(j);
+        }
+
+    }
+        
+}
+void Scene::drawScene( Oryol::Id shadowMap )
 {
     // Draw all the world objects
     for (int i=0; i < sceneObjs.Size(); i++) {
@@ -319,7 +396,7 @@ void Scene::drawScene()
                 this->sceneDrawState.FSTexture[WorldShader::tex] = mesh->texture;
             }
             
-            
+            this->sceneDrawState.FSTexture[WorldShader::shadowMap] = shadowMap;
             this->sceneDrawState.Mesh[0] = mesh->mesh;
             
             Gfx::ApplyDrawState(this->sceneDrawState);            
@@ -349,7 +426,8 @@ void Scene::destroyObject( SceneObject *obj )
     
 }
 
-void Scene::finalizeTransforms(  glm::mat4 matViewProj )
+void Scene::finalizeTransforms(  glm::mat4 matViewProj,
+                                 glm::mat4 shadowMVP )
 {
     // Update scene transforms. TODO this should go into scene
     for (int i=0; i < sceneObjs.Size(); i++) {
@@ -368,9 +446,14 @@ void Scene::finalizeTransforms(  glm::mat4 matViewProj )
         //glm::mat4 mvp = this->camera.ViewProj;
         obj->vsParams.mvp = mvp;
         //obj->tileVSParams.mvp = mvp;
-//        if (obj->interaction) {
-//            obj->interaction->outlineVSParams.mvp = mvp;
-//        }
+        //if (obj->interaction) {
+        //    obj->interaction->outlineVSParams.mvp = mvp;
+        //}
+        
+        glm::mat4 mvpShad = shadowMVP * obj->xform;
+        obj->shadowVSParams.mvp = mvpShad;
+        obj->vsParams.lightMVP = mvpShad;
+        //obj->tileVSParams.lightMVP = mvpShad;
     }
 }
 

@@ -13,6 +13,7 @@
 
 #include "glm/gtc/quaternion.hpp"
 #include "shaders.h"
+#include "shadow_shaders.h"
 
 namespace Tapnik
 {
@@ -64,6 +65,13 @@ public:
     SceneMesh *mesh;
     
     WorldShader::vsParams vsParams;
+    //TileShader::fsParams fsParams;
+    
+    ShadowShader::vsParams shadowVSParams;
+    
+    //TileShader::vsParams tileVSParams;
+    //TileShader::fsParams tileFSParams;
+    
     
     bool isTile;
     bool handTile;
@@ -82,9 +90,10 @@ public:
     Scene();
     void Setup( Oryol::GfxSetup *gfxSetup );
     
-    void drawScene();
+    void drawScene( Oryol::Id shadowMap );
+	void drawShadowPass(Oryol::DrawState& shadowDrawState);
     
-    void finalizeTransforms(  glm::mat4 matViewProj );
+    void finalizeTransforms(  glm::mat4 matViewProj, glm::mat4 shadowMVP );
     
     Oryol::Array<SceneMesh> sceneMeshes;
     Oryol::Array<SceneObject*> sceneObjs;
@@ -95,6 +104,12 @@ public:
     void LoadScene( Oryol::StringAtom sceneName, LoadCompleteFunc loadComplete );
     
     SceneMesh *findMeshByName( Oryol::String meshName );
+
+	SceneMesh* BuildMesh(Oryol::String meshName, Oryol::Id texture,
+		void* vertAndIndexData,
+		int numVertData, 
+		int numIndexData, 
+		int replaceMeshIndex = -1);
     
     SceneObject *spawnObject( SceneMesh *mesh );
     SceneObject *spawnObjectByName( Oryol::String name );

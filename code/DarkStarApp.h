@@ -3,7 +3,9 @@
 //------------------------------------------------------------------------------
 //  DarkStarApp.h
 //------------------------------------------------------------------------------
+#ifdef __APPLE__
 #include <unistd.h>
+#endif
 
 #include "Pre.h"
 
@@ -26,6 +28,7 @@
 
 #include "Camera.h"
 #include "SceneObject.h"
+#include "Renderizer.h"
 #include "DebugDraw.h"
 #include "UIAssets.h"
 
@@ -82,6 +85,8 @@ private:
     void finalizeTransforms( glm::mat4 matViewProj );
     void draw();
     void interfaceScreens( Tapnik::UIAssets *uiAssets );
+
+	Tapnik::Renderizer* renderizer;
     
     Tapnik::UIAssets *uiAssets;
     SoLoud::Soloud soloud;

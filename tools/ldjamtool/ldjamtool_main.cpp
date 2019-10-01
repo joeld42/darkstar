@@ -25,7 +25,10 @@
 #define MEGABYTE (1024*1024)
 #define SCENEFILE_CONTENT_BUFF_SIZE (10 * MEGABYTE)
 
+#ifdef __APPLE__
 #include <TargetConditionals.h>
+#endif
+
 #if TARGET_RT_BIG_ENDIAN
 #   define FourCC2Str(fourcc) (const char[]){*((char*)&fourcc), *(((char*)&fourcc)+1), *(((char*)&fourcc)+2), *(((char*)&fourcc)+3),0}
 #else
@@ -252,7 +255,7 @@ bool WriteGeom( LDJamFileMeshInfo *meshInfo,
 
         meshContents->m_numVerts = numPoints;
 
-        printf("POS type %s size %d\n", FourCC2Str( structType ), posData->GetDataElementCount() );
+        //printf("POS type %s size %d\n", FourCC2Str( structType ), posData->GetDataElementCount() );
         for (uint32_t i = 0; i < numPoints; i++) {
             glm::vec3 p( posData->GetDataElement(i*3+0),
                          posData->GetDataElement(i*3+1),
@@ -481,7 +484,7 @@ int main( int argc, char *argv[] )
         return 1;
     }
     buffer[fileSize] = 0;
-    printf("Read %ld bytes\n", fileSize );
+    printf("Read %zu bytes\n", fileSize );
 
     // Parse the OGEX structure and extact the geometry
     OpenGexDataDescription  openGexDataDescription;
@@ -489,7 +492,9 @@ int main( int argc, char *argv[] )
     if (result != kDataOkay) 
     {
         printf("Failed to parse ogex, Error Code [%s] on line %d -- %s\n", 
-            FourCC2Str(result), openGexDataDescription.GetErrorLine(),
+            "????", //FourCC2Str(result), 
+			
+			openGexDataDescription.GetErrorLine(),
             DescribeError( result ) );
 
         exit(1);
@@ -642,7 +647,8 @@ int main( int argc, char *argv[] )
         printf("SceneObj Info Name: '%s'\n", info->m_name );        
         printf("BBOX Min: %3.2f %3.2f %3.2f\n", info->m_bboxMin.x, info->m_bboxMin.y, info->m_bboxMin.z );
         printf("BBOX Max: %3.2f %3.2f %3.2f\n", info->m_bboxMax.x, info->m_bboxMax.y, info->m_bboxMax.z );
-        printf("Content Offset: %zu Content Len: %zu\n", info->m_contentOffset, info->m_contentLength );
+        printf("Content Offset: %du Content Len: %du\n", 
+			info->m_contentOffset, info->m_contentLength );
     }
 
     // Rewrite the header

@@ -1,7 +1,10 @@
 //------------------------------------------------------------------------------
 //  DarkStarApp.cpp
 //------------------------------------------------------------------------------
+
+#ifdef __APPLE__
 #include <unistd.h>
+#endif
 
 #include "Pre.h"
 #include "Core/Main.h"
@@ -61,7 +64,7 @@ DarkStarApp::OnInit() {
     
     
     
-    gfxSetup = GfxSetup::WindowMSAA4(800, 600, "LD Template (DarkStar)");
+    gfxSetup = GfxSetup::WindowMSAA4( 1280, 720, "LD Template (DarkStar)");
     Gfx::Setup(gfxSetup);
     
     this->uiAssets = Memory::New<UIAssets>();
@@ -89,8 +92,9 @@ DarkStarApp::OnInit() {
         this->musicData = std::move(loadResult.Data);
         music.loadMem(musicData.Data(), musicData.Size(), true, false );
         music.setLooping(true);
-        soloud.play( music );
-        musicPlaying = 1;
+
+		//soloud.play( music );
+		musicPlaying = 0;
     });
     /*
     Input::SetPointerLockHandler([this](const InputEvent& event) -> PointerLockMode::Code {
@@ -141,7 +145,7 @@ DarkStarApp::OnInit() {
     gameScene = Memory::New<Scene>();
     gameScene->Setup( &gfxSetup );
     
-    gameScene->LoadScene( "TEST_Stuff",[this](bool success) {
+    gameScene->LoadScene( "TEST_StuffB",[this](bool success) {
         onSceneLoaded();
     });
     
@@ -179,6 +183,8 @@ DarkStarApp::OnInit() {
     //        obj1->pos = glm::linearRand(minRand, maxRand);
     
     //    }
+
+	renderizer = Memory::New<Renderizer>( gameScene->meshLayout, &gfxSetup);
     
     dbgDraw = new DebugDrawRenderer();
     dbgDraw->Setup( gfxSetup );
@@ -234,13 +240,16 @@ DarkStarApp::OnRunning() {
     {
         this->handleInputDebug();
     }
+
+	// Maybe move this to debug tools??
+	if (Input::KeyDown(Key::P)) {
+		renderizer->debugDrawShadowMap = !renderizer->debugDrawShadowMap;
+	}
     
-    // render one frame
-    Gfx::BeginPass(this->passAction);
-    
-    this->draw();
-    
-    
+
+	// render on frame
+	this->draw();
+
     //    const ddVec3 boxColor  = { 0.0f, 0.8f, 0.8f };
     //    const ddVec3 boxCenter = { 0.0f, 0.0f, 0.0f };
     //    float boxSize = 1.0f;
@@ -265,10 +274,13 @@ DarkStarApp::OnRunning() {
     if (this->uiAssets->fontValid) {
         this->interfaceScreens( uiAssets );
     }
+
+
     
     Dbg::DrawTextBuffer();
-    
-    Gfx::EndPass();
+ 
+	renderizer->finishRender( uiAssets );
+
     Gfx::CommitFrame();
     
     // continue running or quit?
@@ -354,12 +366,15 @@ void DarkStarApp::dynamicUpdate( Oryol::Duration frameDt )
 
 void DarkStarApp::finalizeTransforms( glm::mat4 matViewProj )
 {
-    gameScene->finalizeTransforms( matViewProj );
+	glm::mat4 shadowMVP = renderizer->shadowCamera.ViewProj;
+    gameScene->finalizeTransforms( matViewProj, shadowMVP );
 }
 
 void DarkStarApp::draw()
 {
-    gameScene->drawScene();
+
+    //gameScene->drawScene();
+	renderizer->renderScene(gameScene, uiAssets);
 }
 
 void DarkStarApp::nextCamera()
