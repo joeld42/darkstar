@@ -4,6 +4,7 @@
 
 #include "shaders.h"
 #include "shadow_shaders.h"
+#include "postproc.h"
 
 #include "SceneObject.h"
 #include "Renderizer.h"
@@ -58,11 +59,31 @@ Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout, Oryol::GfxSetup 
     
     // Setup the debug visualization
     auto quadSetup = MeshSetup::FullScreenQuad();
-    this->shadowDebugDrawState.Mesh[0] = Gfx::CreateResource(quadSetup);
+	Oryol::Id quadMesh = Gfx::CreateResource(quadSetup);
+	this->shadowDebugDrawState.Mesh[0] = quadMesh;
     Id shd = Gfx::CreateResource(DebugShadowShader::Setup());
     auto psShadowDebug = PipelineSetup::FromLayoutAndShader(quadSetup.Layout, shd);
     psShadowDebug.RasterizerState.SampleCount = gfxSetup->SampleCount;
-    this->shadowDebugDrawState.Pipeline = Gfx::CreateResource(psShadowDebug);    
+    this->shadowDebugDrawState.Pipeline = Gfx::CreateResource(psShadowDebug);
+
+	// Setup the post-process pass
+	this->postProcDrawState.Mesh[0] = quadMesh;
+	Id postProcShd = Gfx::CreateResource(PostProcShader::Setup());
+	auto psPostProc = PipelineSetup::FromLayoutAndShader(quadSetup.Layout, postProcShd);
+	psPostProc.RasterizerState.SampleCount = gfxSetup->SampleCount;
+	this->postProcDrawState.Pipeline = Gfx::CreateResource(psPostProc);
+
+	// Set up the offscreen render target
+	TextureSetup mainRenderSetup = TextureSetup::RenderTarget2D(
+		1024, 1024, PixelFormat::RGBA16F, PixelFormat::DEPTH);
+	this->mainRenderTarget = Gfx::CreateResource(mainRenderSetup);
+
+	PassSetup mainRenderPassSetup = PassSetup::From(
+		this->mainRenderTarget,  // color target
+		this->mainRenderTarget); // depth target
+
+	mainRenderPassSetup.DefaultAction = PassAction::Clear(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), 1.0f, 0);
+	this->mainRenderPass = Gfx::CreateResource(mainRenderPassSetup);
 }
 
 void Renderizer::renderScene( Tapnik::Scene *scene, Tapnik::UIAssets *uiAssets )
@@ -72,24 +93,31 @@ void Renderizer::renderScene( Tapnik::Scene *scene, Tapnik::UIAssets *uiAssets )
     if (scene) {
         Gfx::BeginPass( shadowPass );
         
-        //    this->shapeRenderer.DrawShadows(this->shadowVSParams);
+        // this->shapeRenderer.DrawShadows(this->shadowVSParams);
         scene->drawShadowPass( shadowDrawState);
         Gfx::EndPass();
     }
     
-    // Start the main render pass
-    Gfx::BeginPass(this->passAction);
-    
-    //    const ddVec3 boxColor  = { 0.0f, 0.8f, 0.8f };
-    //    const ddVec3 boxCenter = { 0.0f, 0.0f, 0.0f };
-    //    float boxSize = 1.0f;
-    //    dd::box(boxCenter, boxColor, boxSize, boxSize, boxSize );
-    //    dd::cross(boxCenter, 1.0f);
+    // Draw the scene into the offscreen buffer
+	Gfx::BeginPass(this->mainRenderPass);
     
     if (scene) {
         scene->drawScene( shadowMap );
     }
-    
+
+	Gfx::EndPass();
+  
+	// Start the main render pass with post-proc 
+	// (for debug text and stuff)
+	Gfx::BeginPass(this->passAction);
+
+	// Draw the post-processes quad
+	postProcFSparams.size = glm::vec2(1.0f, 1.0f);
+	postProcFSparams.offs = glm::vec2(0.0, 0.0);
+	this->postProcDrawState.FSTexture[PostProcShader::tex] = mainRenderTarget;
+	Gfx::ApplyDrawState(this->postProcDrawState);
+	Gfx::ApplyUniformBlock(this->postProcFSparams);
+	Gfx::Draw();
 }
 
 void Renderizer::finishRender(Tapnik::UIAssets* uiAssets)
@@ -105,5 +133,5 @@ void Renderizer::finishRender(Tapnik::UIAssets* uiAssets)
         Gfx::Draw();
     }
     
-    Gfx::EndPass();
+	Gfx::EndPass();
 }

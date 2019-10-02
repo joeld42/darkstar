@@ -11,6 +11,7 @@
 #include "Camera.h"
 
 #include "shadow_shaders.h"
+#include "postproc.h"
 
 namespace Tapnik
 {    
@@ -31,11 +32,19 @@ namespace Tapnik
         Oryol::Id shadowPass;
         Oryol::Id shadowShader;
         Oryol::DrawState shadowDrawState;
-        
         bool debugDrawShadowMap = false;
         
         Oryol::DrawState shadowDebugDrawState;
         DebugShadowShader::vsParams shadowDebugFSparams;
+
+		// Offscreen render pass (pre-color-corrected)
+		Oryol::Id mainRenderTarget;
+		Oryol::Id mainRenderPass;
+		
+		// Post draw (color grade, etc)
+		Oryol::DrawState postProcDrawState;
+		PostProcShader::vsParams postProcFSparams;
+
         
     };
 } // namespace Tapnik

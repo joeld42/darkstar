@@ -119,9 +119,12 @@ void Scene::Setup( Oryol::GfxSetup *gfxSetup )
     auto ps = PipelineSetup::FromLayoutAndShader( meshLayout, worldShader);
     ps.RasterizerState.CullFaceEnabled = true;
     ps.RasterizerState.CullFace = Face::Code::Front;
-    ps.RasterizerState.SampleCount = gfxSetup->SampleCount;
+    //ps.RasterizerState.SampleCount = gfxSetup->SampleCount;
+	ps.RasterizerState.SampleCount = 1;
     ps.DepthStencilState.DepthWriteEnabled = true;
     ps.DepthStencilState.DepthCmpFunc = CompareFunc::LessEqual;
+	ps.BlendState.ColorFormat = PixelFormat::RGBA16F;
+	ps.BlendState.DepthFormat = PixelFormat::DEPTH; // DEPTHSTENCIL
     
     this->sceneDrawState.Pipeline = Gfx::CreateResource(ps);
     
