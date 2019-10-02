@@ -60,6 +60,7 @@ private:
     float angleX = 0.0f;
     float angleY = 0.0f;
     
+	int renderPassMultisample;
     Oryol::GfxSetup gfxSetup;
     Oryol::PassAction passAction;
         

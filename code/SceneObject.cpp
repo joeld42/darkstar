@@ -97,7 +97,7 @@ Scene::Scene()
 }
 
 
-void Scene::Setup( Oryol::GfxSetup *gfxSetup )
+void Scene::Setup( Oryol::GfxSetup *gfxSetup, int renderSampleCount )
 {
     // create shader and pipeline-state-object
     meshLayout = {
@@ -120,7 +120,7 @@ void Scene::Setup( Oryol::GfxSetup *gfxSetup )
     ps.RasterizerState.CullFaceEnabled = true;
     ps.RasterizerState.CullFace = Face::Code::Front;
     //ps.RasterizerState.SampleCount = gfxSetup->SampleCount;
-	ps.RasterizerState.SampleCount = 1;
+	ps.RasterizerState.SampleCount = renderSampleCount;
     ps.DepthStencilState.DepthWriteEnabled = true;
     ps.DepthStencilState.DepthCmpFunc = CompareFunc::LessEqual;
 	ps.BlendState.ColorFormat = PixelFormat::RGBA16F;

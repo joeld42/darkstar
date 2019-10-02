@@ -49,7 +49,7 @@ public:
     // ---------------------------------
     // Implementaiton stuff
     // ---------------------------------
-    void Setup(const Oryol::GfxSetup& gfxSetup);    
+    void Setup(const Oryol::TextureSetup& gfxSetup);    
     void Discard();
     
     glm::mat4x4 debugDrawMVP;

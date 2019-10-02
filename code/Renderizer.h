@@ -17,10 +17,11 @@ namespace Tapnik
 {    
     struct Renderizer {
         
-        Renderizer( const Oryol::VertexLayout &meshLayout, Oryol::GfxSetup *gfxSetup );
+        Renderizer( const Oryol::VertexLayout &meshLayout, Oryol::GfxSetup *gfxSetup, int mainRenderSampleCount  );
         
         void renderScene( Tapnik::Scene *scene, Tapnik::UIAssets *uiAssets );
-        void finishRender( Tapnik::UIAssets *uiAssets );
+		void finishMainPass();
+		void finishRender( Tapnik::UIAssets *uiAssets );
         
         // Main render stuff
         Oryol::PassAction passAction;
@@ -38,6 +39,7 @@ namespace Tapnik
         DebugShadowShader::vsParams shadowDebugFSparams;
 
 		// Offscreen render pass (pre-color-corrected)
+		Oryol::TextureSetup mainRenderSetup;
 		Oryol::Id mainRenderTarget;
 		Oryol::Id mainRenderPass;
 		

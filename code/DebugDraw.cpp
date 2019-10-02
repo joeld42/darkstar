@@ -122,7 +122,7 @@ void DebugDrawRenderer::destroyGlyphTexture(GlyphTextureHandle glyphTex)
 // Implmentation
 // Mostly adapted from Wireframe.h in Oryol samples...
 //------------------------------------------------------------------------------
-void DebugDrawRenderer::Setup(const GfxSetup& gfxSetup)
+void DebugDrawRenderer::Setup(const TextureSetup& gfxSetup)
 {
     Gfx::PushResourceLabel();
     

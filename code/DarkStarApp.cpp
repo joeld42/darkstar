@@ -62,11 +62,13 @@ DarkStarApp::OnInit() {
     
     IO::Setup(ioSetup);
     
-    
-    
-    gfxSetup = GfxSetup::WindowMSAA4( 1280, 720, "LD Template (DarkStar)");
+	// Don't enable MSAA here because we're doing it in the main render texture pass
+    gfxSetup = GfxSetup::Window( 1280, 720, "LD Template (DarkStar)");
     Gfx::Setup(gfxSetup);
-    
+
+	renderPassMultisample = Gfx::QueryFeature(GfxFeature::MSAARenderTargets) ? 4 : 1;
+	//renderPassMultisample = 8;
+
     this->uiAssets = Memory::New<UIAssets>();
     this->uiAssets->SetupUI();
     uiAssets->fbWidth = Gfx::DisplayAttrs().FramebufferWidth;
@@ -143,7 +145,7 @@ DarkStarApp::OnInit() {
     
     // Load the scenes
     gameScene = Memory::New<Scene>();
-    gameScene->Setup( &gfxSetup );
+    gameScene->Setup( &gfxSetup, renderPassMultisample );
     
     gameScene->LoadScene( "TEST_StuffB",[this](bool success) {
         onSceneLoaded();
@@ -184,10 +186,10 @@ DarkStarApp::OnInit() {
     
     //    }
 
-	renderizer = Memory::New<Renderizer>( gameScene->meshLayout, &gfxSetup);
+	renderizer = Memory::New<Renderizer>( gameScene->meshLayout, &gfxSetup, renderPassMultisample);
     
     dbgDraw = new DebugDrawRenderer();
-    dbgDraw->Setup( gfxSetup );
+    dbgDraw->Setup( renderizer->mainRenderSetup );
     dd::initialize( dbgDraw );    
     
     this->lastTimePoint = Clock::Now();
@@ -246,15 +248,14 @@ DarkStarApp::OnRunning() {
 		renderizer->debugDrawShadowMap = !renderizer->debugDrawShadowMap;
 	}
     
-
 	// render on frame
 	this->draw();
 
-    //    const ddVec3 boxColor  = { 0.0f, 0.8f, 0.8f };
-    //    const ddVec3 boxCenter = { 0.0f, 0.0f, 0.0f };
-    //    float boxSize = 1.0f;
-    //    dd::box(boxCenter, boxColor, boxSize, boxSize, boxSize );
-    //    dd::cross(boxCenter, 1.0f);
+        const ddVec3 boxColor  = { 0.0f, 0.8f, 0.8f };
+        const ddVec3 boxCenter = { 0.0f, 0.0f, 0.0f };
+        float boxSize = 1.0f;
+        dd::box(boxCenter, boxColor, boxSize, boxSize, boxSize );
+        dd::cross(boxCenter, 1.0f);
     
     if (Input::KeyDown(Key::Tab)) {
         debugMode = !debugMode;
@@ -265,17 +266,18 @@ DarkStarApp::OnRunning() {
         textPos2D[0] = uiAssets->fbWidth / 2.0;
         dd::screenText("Debug Mode", textPos2D, dd::colors::Orange );
     }
+
+	// Flush debug draws (as part of the main pass)
+	Oryol::Duration appTime = lastTimePoint.Since(startTimePoint);
+	dd::flush(appTime.AsMilliSeconds());
+
+	renderizer->finishMainPass();
     
-    // Flush debug draws
-    Oryol::Duration appTime = lastTimePoint.Since( startTimePoint );
-    dd::flush( appTime.AsMilliSeconds() );
     
     // Do UI
     if (this->uiAssets->fontValid) {
         this->interfaceScreens( uiAssets );
     }
-
-
     
     Dbg::DrawTextBuffer();
  

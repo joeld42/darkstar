@@ -12,7 +12,8 @@
 using namespace Oryol;
 using namespace Tapnik;
 
-Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout, Oryol::GfxSetup *gfxSetup )
+Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout, 
+	Oryol::GfxSetup *gfxSetup, int mainRenderSampleCount )
 {
     // Main render setup
     this->passAction.Color[0] = glm::vec4( 0.2, 0.2, 0.2, 1.0 );
@@ -37,7 +38,9 @@ Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout, Oryol::GfxSetup 
 
 
     TextureSetup shadowMapSetup = TextureSetup::RenderTarget2D(shadowMapSize, shadowMapSize, PixelFormat::RGBA8, PixelFormat::DEPTH);
-    this->shadowMap = Gfx::CreateResource(shadowMapSetup);
+	shadowMapSetup.Sampler.MinFilter = TextureFilterMode::Linear;
+	shadowMapSetup.Sampler.MagFilter = TextureFilterMode::Linear;
+	this->shadowMap = Gfx::CreateResource(shadowMapSetup);
     
     PassSetup shadowPassSetup = PassSetup::From(this->shadowMap,  // color target
                                                 this->shadowMap); // depth target
@@ -74,8 +77,17 @@ Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout, Oryol::GfxSetup 
 	this->postProcDrawState.Pipeline = Gfx::CreateResource(psPostProc);
 
 	// Set up the offscreen render target
-	TextureSetup mainRenderSetup = TextureSetup::RenderTarget2D(
-		1024, 1024, PixelFormat::RGBA16F, PixelFormat::DEPTH);
+	float renderDownscale = 0.25;
+	mainRenderSetup = TextureSetup::RenderTarget2D(
+		(int)(1280*renderDownscale), 
+		(int)(720*renderDownscale), PixelFormat::RGBA16F, PixelFormat::DEPTH);
+	mainRenderSetup.SampleCount = mainRenderSampleCount;
+
+	mainRenderSetup.Sampler.MinFilter = TextureFilterMode::Linear;
+	mainRenderSetup.Sampler.MagFilter = TextureFilterMode::Linear;
+	mainRenderSetup.Sampler.WrapU = TextureWrapMode::Repeat;
+	mainRenderSetup.Sampler.WrapV = TextureWrapMode::Repeat;
+	
 	this->mainRenderTarget = Gfx::CreateResource(mainRenderSetup);
 
 	PassSetup mainRenderPassSetup = PassSetup::From(
@@ -86,24 +98,28 @@ Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout, Oryol::GfxSetup 
 	this->mainRenderPass = Gfx::CreateResource(mainRenderPassSetup);
 }
 
-void Renderizer::renderScene( Tapnik::Scene *scene, Tapnik::UIAssets *uiAssets )
+void Renderizer::renderScene(Tapnik::Scene* scene, Tapnik::UIAssets* uiAssets)
 {
-    // the shadow pass
-    // this->shadowVSParams.mvp = this->lightProjView;
-    if (scene) {
-        Gfx::BeginPass( shadowPass );
-        
-        // this->shapeRenderer.DrawShadows(this->shadowVSParams);
-        scene->drawShadowPass( shadowDrawState);
-        Gfx::EndPass();
-    }
-    
-    // Draw the scene into the offscreen buffer
+	// the shadow pass
+	// this->shadowVSParams.mvp = this->lightProjView;
+	if (scene) {
+		Gfx::BeginPass(shadowPass);
+
+		// this->shapeRenderer.DrawShadows(this->shadowVSParams);
+		scene->drawShadowPass(shadowDrawState);
+		Gfx::EndPass();
+	}
+
+	// Draw the scene into the offscreen buffer
 	Gfx::BeginPass(this->mainRenderPass);
-    
-    if (scene) {
-        scene->drawScene( shadowMap );
-    }
+
+	if (scene) {
+		scene->drawScene(shadowMap);
+	}
+}
+
+void Renderizer::finishMainPass()
+{
 
 	Gfx::EndPass();
   

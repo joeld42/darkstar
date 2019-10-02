@@ -88,7 +88,7 @@ class Scene
 {
 public:
     Scene();
-    void Setup( Oryol::GfxSetup *gfxSetup );
+    void Setup( Oryol::GfxSetup *gfxSetup, int renderSampleCount );
     
     void drawScene( Oryol::Id shadowMap );
 	void drawShadowPass(Oryol::DrawState& shadowDrawState);
