@@ -30,11 +30,13 @@ namespace Tapnik
 		Oryol::Id backgroundRenderPass;
 		Oryol::DrawState backgroundDrawState;
 		BackgroundShader::vsParams backgroundVSparams;
+		BackgroundShader::fsParams backgroundFSparams;
 		Oryol::DrawState bgquadDrawState;
-		BGQuadShader::vsParams bgquadFSParams;
+		BGQuadShader::vsParams bgquadFSParams;		
 
         // Main render stuff
         Oryol::PassAction passAction;
+		Camera* activeCamera;
         
         // Shadow stuff
         const int shadowMapSize = 2048;

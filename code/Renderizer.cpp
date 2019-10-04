@@ -9,6 +9,8 @@
 #include "SceneObject.h"
 #include "Renderizer.h"
 
+#include "glm/glm.hpp"
+
 using namespace Oryol;
 using namespace Tapnik;
 
@@ -162,9 +164,19 @@ void Renderizer::renderScene(Tapnik::Scene* scene, Tapnik::UIAssets* uiAssets)
 
 	backgroundVSparams.size = glm::vec2(1.0f, 1.0f);
 	backgroundVSparams.offs = glm::vec2(0.0, 0.0);
+	if (activeCamera) {
+
+		glm::mat4x4 camXform = activeCamera->Model;
+		
+		//backgroundFSparams.cameraXform = glm::inverse(camXform);
+		backgroundFSparams.cameraXform = camXform;
+		backgroundFSparams.aspect = uiAssets->fbWidth / uiAssets->fbHeight;
+	}
+
 	//this->backgroundVSparams.FSTexture[PostProcShader::tex] = mainRenderTarget;
 	Gfx::ApplyDrawState(this->backgroundDrawState);
 	Gfx::ApplyUniformBlock(this->backgroundVSparams);
+	Gfx::ApplyUniformBlock(this->backgroundFSparams);
 	Gfx::Draw();
 	Gfx::EndPass();
 
@@ -174,6 +186,7 @@ void Renderizer::renderScene(Tapnik::Scene* scene, Tapnik::UIAssets* uiAssets)
 	// Draw the background quad	
 	bgquadFSParams.size = glm::vec2(1.0f, 1.0f);
 	bgquadFSParams.offs = glm::vec2(0.0, 0.0);
+
 	this->bgquadDrawState.FSTexture[BGQuadShader::tex] = backgroundRenderTarget;
 	Gfx::ApplyDrawState(this->bgquadDrawState);
 	Gfx::ApplyUniformBlock(this->bgquadFSParams);
