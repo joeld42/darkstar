@@ -70,32 +70,79 @@ Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout,
     this->shadowDebugDrawState.Pipeline = Gfx::CreateResource(psShadowDebug);
 
 	// Setup the post-process pass
-	this->postProcDrawState.Mesh[0] = quadMesh;
-	Id postProcShd = Gfx::CreateResource(PostProcShader::Setup());
-	auto psPostProc = PipelineSetup::FromLayoutAndShader(quadSetup.Layout, postProcShd);
-	psPostProc.RasterizerState.SampleCount = gfxSetup->SampleCount;
-	this->postProcDrawState.Pipeline = Gfx::CreateResource(psPostProc);
+	{
+		this->postProcDrawState.Mesh[0] = quadMesh;
+		Id postProcShd = Gfx::CreateResource(PostProcShader::Setup());
+		auto psPostProc = PipelineSetup::FromLayoutAndShader(quadSetup.Layout, postProcShd);
+		psPostProc.RasterizerState.SampleCount = gfxSetup->SampleCount;
+		this->postProcDrawState.Pipeline = Gfx::CreateResource(psPostProc);
+	}
 
 	// Set up the offscreen render target
-	float renderDownscale = 1;
-	mainRenderSetup = TextureSetup::RenderTarget2D(
-		(int)(1280*renderDownscale), 
-		(int)(720*renderDownscale), PixelFormat::RGBA16F, PixelFormat::DEPTH);
-	mainRenderSetup.SampleCount = mainRenderSampleCount;
-
-	mainRenderSetup.Sampler.MinFilter = TextureFilterMode::Linear;
-	mainRenderSetup.Sampler.MagFilter = TextureFilterMode::Linear;
-	mainRenderSetup.Sampler.WrapU = TextureWrapMode::Repeat;
-	mainRenderSetup.Sampler.WrapV = TextureWrapMode::Repeat;
 	
-	this->mainRenderTarget = Gfx::CreateResource(mainRenderSetup);
+		float renderDownscale = 1;
+		mainRenderSetup = TextureSetup::RenderTarget2D(
+			(int)(1280 * renderDownscale),
+			(int)(720 * renderDownscale), PixelFormat::RGBA16F, PixelFormat::DEPTH);
+		mainRenderSetup.SampleCount = mainRenderSampleCount;
 
-	PassSetup mainRenderPassSetup = PassSetup::From(
-		this->mainRenderTarget,  // color target
-		this->mainRenderTarget); // depth target
+		mainRenderSetup.Sampler.MinFilter = TextureFilterMode::Linear;
+		mainRenderSetup.Sampler.MagFilter = TextureFilterMode::Linear;
+		mainRenderSetup.Sampler.WrapU = TextureWrapMode::Repeat;
+		mainRenderSetup.Sampler.WrapV = TextureWrapMode::Repeat;
 
-	mainRenderPassSetup.DefaultAction = PassAction::Clear(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), 1.0f, 0);
-	this->mainRenderPass = Gfx::CreateResource(mainRenderPassSetup);
+		this->mainRenderTarget = Gfx::CreateResource(mainRenderSetup);
+
+		PassSetup mainRenderPassSetup = PassSetup::From(
+			this->mainRenderTarget,  // color target
+			this->mainRenderTarget); // depth target
+
+		mainRenderPassSetup.DefaultAction = PassAction::Clear(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), 1.0f, 0);
+		this->mainRenderPass = Gfx::CreateResource(mainRenderPassSetup);
+	
+
+
+	// Set up the background render target
+	{
+		float bgRenderDownscale = 0.5;
+		backgroundRenderSetup = TextureSetup::RenderTarget2D(
+			(int)(1280 * bgRenderDownscale),
+			(int)(720 * bgRenderDownscale), PixelFormat::RGBA16F, PixelFormat::None);
+		backgroundRenderSetup.SampleCount = 1;
+		//backgroundRenderSetup.SampleCount = mainRenderSampleCount;
+
+		backgroundRenderSetup.Sampler.MinFilter = TextureFilterMode::Linear;
+		backgroundRenderSetup.Sampler.MagFilter = TextureFilterMode::Linear;
+		backgroundRenderSetup.Sampler.WrapU = TextureWrapMode::Repeat;
+		backgroundRenderSetup.Sampler.WrapV = TextureWrapMode::Repeat;
+
+		this->backgroundRenderTarget = Gfx::CreateResource(backgroundRenderSetup);
+
+		PassSetup backgroundRenderPassSetup = PassSetup::From(
+			this->backgroundRenderTarget,  // color target
+			Id::InvalidId() ); // depth target
+
+		backgroundRenderPassSetup.DefaultAction = PassAction::Clear(glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), 1.0f, 0);
+		this->backgroundRenderPass = Gfx::CreateResource(backgroundRenderPassSetup);
+
+		this->backgroundDrawState.Mesh[0] = quadMesh;
+		Id shaderBG = Gfx::CreateResource(BackgroundShader::Setup());
+		auto psBackgroundRndr = PipelineSetup::FromLayoutAndShader(quadSetup.Layout, shaderBG);
+		psBackgroundRndr.BlendState.ColorFormat = backgroundRenderSetup.ColorFormat;
+		psBackgroundRndr.BlendState.DepthFormat = backgroundRenderSetup.DepthFormat;
+		psBackgroundRndr.RasterizerState.SampleCount = 1;
+		//psBackgroundRndr.RasterizerState.SampleCount = gfxSetup->SampleCount;
+		this->backgroundDrawState.Pipeline = Gfx::CreateResource(psBackgroundRndr);
+
+		this->bgquadDrawState.Mesh[0] = quadMesh;
+		Id bgquadShd = Gfx::CreateResource(BGQuadShader::Setup());
+		auto psBGQuad = PipelineSetup::FromLayoutAndShader(quadSetup.Layout, bgquadShd);
+		psBGQuad.RasterizerState.SampleCount = mainRenderSetup.SampleCount;
+		psBGQuad.BlendState.ColorFormat = mainRenderSetup.ColorFormat;
+		psBGQuad.BlendState.DepthFormat = mainRenderSetup.DepthFormat;
+		this->bgquadDrawState.Pipeline = Gfx::CreateResource(psBGQuad);
+	}
+
 }
 
 void Renderizer::renderScene(Tapnik::Scene* scene, Tapnik::UIAssets* uiAssets)
@@ -110,9 +157,29 @@ void Renderizer::renderScene(Tapnik::Scene* scene, Tapnik::UIAssets* uiAssets)
 		Gfx::EndPass();
 	}
 
+	// Draw the background pass itself
+	Gfx::BeginPass(this->backgroundRenderPass);
+
+	backgroundVSparams.size = glm::vec2(1.0f, 1.0f);
+	backgroundVSparams.offs = glm::vec2(0.0, 0.0);
+	//this->backgroundVSparams.FSTexture[PostProcShader::tex] = mainRenderTarget;
+	Gfx::ApplyDrawState(this->backgroundDrawState);
+	Gfx::ApplyUniformBlock(this->backgroundVSparams);
+	Gfx::Draw();
+	Gfx::EndPass();
+
 	// Draw the scene into the offscreen buffer
 	Gfx::BeginPass(this->mainRenderPass);
 
+	// Draw the background quad	
+	bgquadFSParams.size = glm::vec2(1.0f, 1.0f);
+	bgquadFSParams.offs = glm::vec2(0.0, 0.0);
+	this->bgquadDrawState.FSTexture[BGQuadShader::tex] = backgroundRenderTarget;
+	Gfx::ApplyDrawState(this->bgquadDrawState);
+	Gfx::ApplyUniformBlock(this->bgquadFSParams);
+	Gfx::Draw();
+
+	// Draw the actual scene
 	if (scene) {
 		scene->drawScene(shadowMap);
 	}
@@ -120,7 +187,6 @@ void Renderizer::renderScene(Tapnik::Scene* scene, Tapnik::UIAssets* uiAssets)
 
 void Renderizer::finishMainPass()
 {
-
 	Gfx::EndPass();
   
 	// Start the main render pass with post-proc 

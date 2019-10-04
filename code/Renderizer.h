@@ -12,6 +12,7 @@
 
 #include "shadow_shaders.h"
 #include "postproc.h"
+#include "background.h"
 
 namespace Tapnik
 {    
@@ -23,6 +24,15 @@ namespace Tapnik
 		void finishMainPass();
 		void finishRender( Tapnik::UIAssets *uiAssets );
         
+		// Background (SDF Skybox) pass
+		Oryol::TextureSetup backgroundRenderSetup;
+		Oryol::Id backgroundRenderTarget;
+		Oryol::Id backgroundRenderPass;
+		Oryol::DrawState backgroundDrawState;
+		BackgroundShader::vsParams backgroundVSparams;
+		Oryol::DrawState bgquadDrawState;
+		BGQuadShader::vsParams bgquadFSParams;
+
         // Main render stuff
         Oryol::PassAction passAction;
         
