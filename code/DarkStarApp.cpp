@@ -45,6 +45,9 @@
 using namespace Oryol;
 using namespace Tapnik;
 
+// These get crated in DarkStar-Main
+extern Oryol::Args OryolArgs;
+
 //------------------------------------------------------------------------------
 AppState::Code
 DarkStarApp::OnInit() {
@@ -63,7 +66,13 @@ DarkStarApp::OnInit() {
     IO::Setup(ioSetup);
     
 	// Don't enable MSAA here because we're doing it in the main render texture pass
-    gfxSetup = GfxSetup::Window( 1280, 720, "LD Template (DarkStar)");
+
+	const char* windowTitle = "LD Template (DarkStar)";
+	if (OryolArgs.HasArg("--fullscreen")) {
+		gfxSetup = GfxSetup::Fullscreen(1280, 720, windowTitle);
+	} else {
+		gfxSetup = GfxSetup::Window(1280, 720, windowTitle );
+	}
     Gfx::Setup(gfxSetup);
 
 	renderPassMultisample = Gfx::QueryFeature(GfxFeature::MSAARenderTargets) ? 4 : 1;
@@ -260,6 +269,7 @@ DarkStarApp::OnRunning() {
     if (Input::KeyDown(Key::Tab)) {
         debugMode = !debugMode;
         Log::Info( "Debug Mode: %s\n", debugMode?"ON":"OFF" );
+
     }
     if (debugMode) {
         ddVec3 textPos2D = { 0.0f, 20.0f, 0.0f };
@@ -267,10 +277,15 @@ DarkStarApp::OnRunning() {
         dd::screenText("Debug Mode", textPos2D, dd::colors::Orange );
     }
 
+	if (Input::KeyDown(Key::Escape)|| Input::KeyDown(Key::Q)) {
+		Log::Info("Request Quit...\n");
+		requestQuit();
+	}
+
 	// Flush debug draws (as part of the main pass)
 	Oryol::Duration appTime = lastTimePoint.Since(startTimePoint);
 	dd::flush(appTime.AsMilliSeconds());
-
+			
 	renderizer->finishMainPass();
     
     
@@ -286,7 +301,7 @@ DarkStarApp::OnRunning() {
     Gfx::CommitFrame();
     
     // continue running or quit?
-    return Gfx::QuitRequested() ? AppState::Cleanup : AppState::Running;
+    return (App::quitRequested || Gfx::QuitRequested()) ? AppState::Cleanup : AppState::Running;
 }
 
 void

@@ -30,7 +30,6 @@
 #include "par_easings.h"
 
 using namespace Oryol;
-
 OryolMain(DarkStarApp);
 
 

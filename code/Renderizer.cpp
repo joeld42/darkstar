@@ -77,7 +77,7 @@ Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout,
 	this->postProcDrawState.Pipeline = Gfx::CreateResource(psPostProc);
 
 	// Set up the offscreen render target
-	float renderDownscale = 0.25;
+	float renderDownscale = 1;
 	mainRenderSetup = TextureSetup::RenderTarget2D(
 		(int)(1280*renderDownscale), 
 		(int)(720*renderDownscale), PixelFormat::RGBA16F, PixelFormat::DEPTH);
