@@ -58,6 +58,7 @@ void main() {
 uniform fsParams {
     float aspect;
 	mat4 cameraXform;
+	float aTime;
 };
 in vec2 uv;
 out vec4 fragColor;

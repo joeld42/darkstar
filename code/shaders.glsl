@@ -82,6 +82,7 @@ vec4 gamma(vec4 c) {
 //------------------------------------------------------------------------------
 @vs worldVS
 uniform vsParams {
+    mat4 modelview;
     mat4 mvp;
     mat4 lightMVP;
     vec4 decalTint;
@@ -92,28 +93,33 @@ in vec4 position;
 in vec4 normal;
 in vec2 texcoord0;
 in vec2 texcoord1;
+
 out vec2 uv;
-out vec2 uvDecal;
-out vec4 nrm;
 out vec4 color;
+out vec4 nrm_ws;
 out vec4 lightProjPos;
-out vec4 lightDir;
-out vec4 decalTintColor;
-out vec4 world_nrm;
+
+//out vec4 nrm_ws;
+//out vec4 lightProjPos;
+//out vec4 lightDir;
+//out vec4 world_nrm;
 
 void main() {
     gl_Position = mvp * position;
     lightProjPos = lightMVP * position;
-	lightDir = lightMVP * vec4( 0,0,1,0 );
+    //lightDir = vec4( normalize(vec3( 0.4, 0.1, 1.0)), 0.0);
+
     uv = texcoord0;
-    uvDecal = texcoord1;
-    world_nrm = normal;
-    nrm = normalize(mvp * vec4(normal.xyz,0) );
+    //uvDecal = texcoord1;
+    //world_nrm = normal;
+    //nrm = normalize(mvp * vec4(normal.xyz,0) );
+    nrm_ws = normalize( modelview * vec4( normal.xyz,0) );
     
     color = tintColor;
-    decalTintColor = decalTint;
+    //decalTintColor = decalTint;
 }
 @end
+
 
 @fs worldFS
 @include util
@@ -121,37 +127,41 @@ uniform fsParams {
     vec2 decalUVOffs;
 };
 uniform sampler2D tex;
-uniform sampler2D texDecal;
 uniform sampler2D shadowMap;
+//uniform sampler2D texDecal;
+
 in vec2 uv;
-in vec2 uvDecal;
-in vec4 nrm;
-in vec4 world_nrm;
-in vec4 ldir;
 in vec4 color;
+in vec4 nrm_ws;
 in vec4 lightProjPos;
-in vec4 lightDir;
-in vec4 decalTintColor;
+
+//in vec4 lightDir;
+//in vec4 world_nrm;
+
 out vec4 fragColor;
+
 void main() {
     vec4 c = texture(tex, uv );
     
-    if (c.a < 0.2f) {
-        discard;
-    }
-    
+//    if (c.a < 0.2f) {
+//        discard;
+//    }
+
     //vec4 cDecal = texture(texDecal, uvDecal );
 
-    vec3 cBaseColor = c.xyz * color.xyz;
+    vec3 cBaseColor = c.xyz*color.xyz;
     
     //vec3 cDecalColor = cDecal.xyz * decalTintColor.xyz;
     //vec3 cResult = mix( cBaseColor, cDecalColor, cDecal.a * decalTintColor.a );
-
-	float nDotL = clamp( dot( lightDir.xyz, nrm.xyz ), 0, 1);
-	vec3 lightCol = mix( vec3(0.1,0.12,0.2), vec3(1,1,1), nDotL );
-
+	
+    vec3 lightDir = normalize(vec3( 0.4, 0.1, 1.0) );
+	float nDotL = clamp( dot( lightDir, nrm_ws.xyz ), 0, 1);
+	vec3 lightCol = mix( vec3(0.1,0.12,0.2), vec3(1.1), nDotL );
     fragColor = applyShadow( shadowMap, vec4(cBaseColor * lightCol, 1.0), lightProjPos );
+    //fragColor = applyShadow( shadowMap, vec4( lightCol, 1.0), lightProjPos );
     
+    //fragColor = vec4( (lightDir.xyz * 0.5) + vec3(0.5), 1.0 );
+    //fragColor = vec4( cBaseColor * lightCol, 1.0 );
 }
 @end
 

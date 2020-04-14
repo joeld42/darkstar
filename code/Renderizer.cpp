@@ -17,6 +17,8 @@ using namespace Tapnik;
 Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout, 
 	Oryol::GfxSetup *gfxSetup, int mainRenderSampleCount )
 {
+	sceneTime = 0.0f;
+
     // Main render setup
     this->passAction.Color[0] = glm::vec4( 0.2, 0.2, 0.2, 1.0 );
 
@@ -27,13 +29,16 @@ Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout,
     shadowCamera = {};
 
     shadowCamera.Setup(glm::vec3(0.0, 0.0, 25.0), glm::radians(45.0f),
-                    shadowMapSize, shadowMapSize, 1.0f, 100.0f);
-    
+                    shadowMapSize, shadowMapSize, 10.0f, 60.0f);
+   
+
     // Doesn't quite work
-//    shadowCamera.SetupShadow(glm::vec3(0.0, 0.0, 25.0), 20.0f, shadowMapSize, shadowMapSize, 1.0f, 100.0f );
+    //shadowCamera.SetupShadow(glm::vec3(0.0, 0.0, 25.0), 20.0f, shadowMapSize, shadowMapSize, 1.0f, 100.0f );
     
-    shadowCamera.Pos = glm::vec3( 11.22, -29.90, 34.06 );
+	shadowCamera.Pos = glm::vec3(9.22, -29.90, 34.06) * 0.9f;
+    //shadowCamera.Pos = glm::vec3( 11.22, -29.90, 34.06 );
     shadowCamera.Rot = glm::vec2( 0.28, 0.68 );
+	
     
     // This applies the pos/rot
     shadowCamera.MoveRotate( glm::vec3(0.0f), glm::vec2(0.0f));
@@ -63,7 +68,12 @@ Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout,
     this->shadowDrawState.Pipeline = Gfx::CreateResource(ps);
     
     // Setup the debug visualization
-    auto quadSetup = MeshSetup::FullScreenQuad();
+	bool flipQuad = false;
+// flip on Metal targets
+#ifdef ORYOL_OSX
+	flipQuad = true;
+#endif
+    auto quadSetup = MeshSetup::FullScreenQuad( flipQuad );
 	Oryol::Id quadMesh = Gfx::CreateResource(quadSetup);
 	this->shadowDebugDrawState.Mesh[0] = quadMesh;
     Id shd = Gfx::CreateResource(DebugShadowShader::Setup());
@@ -85,7 +95,7 @@ Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout,
 		float renderDownscale = 1;
 		mainRenderSetup = TextureSetup::RenderTarget2D(
 			(int)(1280 * renderDownscale),
-			(int)(720 * renderDownscale), PixelFormat::RGBA16F, PixelFormat::DEPTH);
+			(int)(720 * renderDownscale), PixelFormat::RGBA16F, PixelFormat::DEPTHSTENCIL );
 		mainRenderSetup.SampleCount = mainRenderSampleCount;
 
 		mainRenderSetup.Sampler.MinFilter = TextureFilterMode::Linear;
@@ -147,6 +157,22 @@ Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout,
 
 }
 
+void Renderizer::testShadowStuff(float shadNear, float shadFar)
+{
+	shadowCamera.Setup(glm::vec3(0.0, 0.0, 25.0), glm::radians(45.0f),
+		shadowMapSize, shadowMapSize, shadNear, shadFar );
+
+	//shadowCamera.SetupShadow(glm::vec3(0.0, 0.0, 25.0), 20.0f, shadowMapSize, shadowMapSize, shadNear, shadFar );
+
+	shadowCamera.Pos = glm::vec3(9.22, -29.90, 34.06) *0.9f;
+	shadowCamera.Rot = glm::vec2(0.28, 0.68);
+
+	// This applies the pos/rot
+	shadowCamera.MoveRotate(glm::vec3(0.0f), glm::vec2(0.0f));
+
+	
+}
+
 void Renderizer::renderScene(Tapnik::Scene* scene, Tapnik::UIAssets* uiAssets)
 {
 	// the shadow pass
@@ -171,6 +197,7 @@ void Renderizer::renderScene(Tapnik::Scene* scene, Tapnik::UIAssets* uiAssets)
 		//backgroundFSparams.cameraXform = glm::inverse(camXform);
 		backgroundFSparams.cameraXform = camXform;
 		backgroundFSparams.aspect = uiAssets->fbWidth / uiAssets->fbHeight;
+		backgroundFSparams.aTime = sceneTime;
 	}
 
 	//this->backgroundVSparams.FSTexture[PostProcShader::tex] = mainRenderTarget;
@@ -193,7 +220,7 @@ void Renderizer::renderScene(Tapnik::Scene* scene, Tapnik::UIAssets* uiAssets)
 	Gfx::Draw();
 
 	// Draw the actual scene
-	if (scene) {
+	if ((scene)&&(drawMainScene)) {
 		scene->drawScene(shadowMap);
 	}
 }

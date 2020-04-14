@@ -72,11 +72,6 @@ public:
     //TileShader::vsParams tileVSParams;
     //TileShader::fsParams tileFSParams;
     
-    
-    bool isTile;
-    bool handTile;
-    char tileLetter;
-    
     //glm::vec3 pos;
     //glm::quat rot;
     
@@ -95,7 +90,7 @@ public:
     
     void finalizeTransforms(  glm::mat4 matViewProj, glm::mat4 shadowMVP );
     
-    Oryol::Array<SceneMesh> sceneMeshes;
+    Oryol::Array<SceneMesh*> sceneMeshes;
     Oryol::Array<SceneObject*> sceneObjs;
     Oryol::Array<SceneCamera> sceneCams;
     
@@ -118,6 +113,7 @@ public:
     SceneCamera findNamedCamera( Oryol::String cameraName );
     
     void destroyObject( SceneObject *obj );
+	
     
     SceneObject *FindNamedObject( Oryol::String name );
     
@@ -145,13 +141,7 @@ public:
     
     Oryol::Buffer sceneBuff;
         
-private:
-    enum TileDrawType {
-        TileDrawType_WORLD,
-        TileDrawType_HAND,
-        TileDrawType_OUTLINE
-    };
-    void drawTiles( Oryol::DrawState *drawState, TileDrawType tileDrawType );
+
 };
 
 bool RayHitObject( SceneObject *obj, Ray ray );

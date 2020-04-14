@@ -442,7 +442,7 @@ void DarkStarApp::interfaceScreens( Tapnik::UIAssets *uiAssets )
     // Button image width is 223, not sure where the extra space is coming from
     float menuW = 230;
     //float menuMarg = (uiAssets->fbWidth - menuW) / 2;
-	float menuMarg = 20;
+	float menuMarg = 20;            
     
     ctx->style.window.padding = nk_vec2(0,0);
     ctx->style.window.padding = nk_vec2(0,0);

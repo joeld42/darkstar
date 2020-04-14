@@ -24,6 +24,10 @@ namespace Tapnik
 		void finishMainPass();
 		void finishRender( Tapnik::UIAssets *uiAssets );
         
+		void testShadowStuff(float shadNear, float shadFar);
+
+		float sceneTime;
+
 		// Background (SDF Skybox) pass
 		Oryol::TextureSetup backgroundRenderSetup;
 		Oryol::Id backgroundRenderTarget;
@@ -46,6 +50,7 @@ namespace Tapnik
         Oryol::Id shadowShader;
         Oryol::DrawState shadowDrawState;
         bool debugDrawShadowMap = false;
+		bool drawMainScene = true;
         
         Oryol::DrawState shadowDebugDrawState;
         DebugShadowShader::vsParams shadowDebugFSparams;

@@ -29,9 +29,34 @@ void main() {
 uniform sampler2D tex;
 in vec2 uv;
 out vec4 fragColor;
+
+vec3 whitePreservingLumaBasedReinhardToneMapping(vec3 color)
+{
+	float white = 2.;
+	float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
+	float toneMappedLuma = luma * (1. + luma / (white*white)) / (1. + luma);
+	color *= toneMappedLuma / luma;
+	color = pow(color, vec3(1. / 2.2));
+	return color;
+}
+
 void main() {
     vec4 color = texture(tex, uv);
-    fragColor = color;
+	vec3 c2 = whitePreservingLumaBasedReinhardToneMapping( color.xyz );
+    
+//    if (uv.y < 0.33)
+//    {
+//        fragColor = color; // top: no tonemapping
+//    } else if (uv.y > 0.66)
+//    {
+//        fragColor = vec4( c2, 1.0f ); // bottom, tonemapping, no CC
+//    }
+//    else {
+//        //middle: tonemap and cc
+        fragColor = vec4( pow( c2+vec3(0.1, 0.1,0.12), vec3(2.2f)), 1.0 );
+//    }
+
+    
 }
 @end
 
