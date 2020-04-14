@@ -44,17 +44,17 @@ void main() {
     vec4 color = texture(tex, uv);
 	vec3 c2 = whitePreservingLumaBasedReinhardToneMapping( color.xyz );
     
-//    if (uv.y < 0.33)
-//    {
-//        fragColor = color; // top: no tonemapping
-//    } else if (uv.y > 0.66)
-//    {
-//        fragColor = vec4( c2, 1.0f ); // bottom, tonemapping, no CC
-//    }
-//    else {
-//        //middle: tonemap and cc
+    if (uv.y < 0.33)
+    {
+        fragColor = color; // top: no tonemapping
+    } else if (uv.y > 0.66)
+    {
+        fragColor = vec4( c2, 1.0f ); // bottom, tonemapping, no CC
+    }
+    else {
+        //middle: tonemap and cc
         fragColor = vec4( pow( c2+vec3(0.1, 0.1,0.12), vec3(2.2f)), 1.0 );
-//    }
+    }
 
     
 }

@@ -13,14 +13,9 @@
 
 struct GameSettings
 {
-    bool useSimpleBackground = true; // TODO: enable this
+    bool useSimpleBackground = true; // TODO: look at this
     int renderPassMultisample = 1;
-    
-    // Tile Mesh Generation Settings
-    bool tileGenWireframe = false;
-    int tileSubdivLevel = 4;
-    int tileTextureRes = 128;
-    
+       
     // Sound settings
     float musicVolume = 0.25f;
     float sfxVolume = 1.0f;

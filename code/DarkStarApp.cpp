@@ -51,32 +51,38 @@ extern Oryol::Args OryolArgs;
 //------------------------------------------------------------------------------
 AppState::Code
 DarkStarApp::OnInit() {
-    
-    // set up IO system
-    IOSetup ioSetup;
+
+	// Get settings from config file
+	GameSettings defaultConfig = GameSettings::DefaultHighSpecSettings();
+	cfg = GameSettings::FromConfigFileWithDefaults(defaultConfig, "config.ini");
+
+	// set up IO system
+	IOSetup ioSetup;
 #if ORYOL_EMSCRIPTEN
-    ioSetup.FileSystems.Add("http", HTTPFileSystem::Creator());
-    ioSetup.Assigns.Add("gamedata:", "http://localhost:8000/gamedata/");
+	ioSetup.FileSystems.Add("http", HTTPFileSystem::Creator());
+	ioSetup.Assigns.Add("gamedata:", "http://localhost:8000/gamedata/");
 #else
-    ioSetup.FileSystems.Add( "file", LocalFileSystem::Creator() );
-    //ioSetup.Assigns.Add("gamedata:", "root:../Resources/gamedata/");
-    ioSetup.Assigns.Add("gamedata:", "cwd:gamedata/");
+	ioSetup.FileSystems.Add("file", LocalFileSystem::Creator());
+	//ioSetup.Assigns.Add("gamedata:", "root:../Resources/gamedata/");
+	ioSetup.Assigns.Add("gamedata:", "cwd:gamedata/");
 #endif
-    
-    IO::Setup(ioSetup);
-    
+
+	IO::Setup(ioSetup);
+
 	// Don't enable MSAA here because we're doing it in the main render texture pass
 
 	const char* windowTitle = "LD Template (DarkStar)";
 	if (OryolArgs.HasArg("--fullscreen")) {
 		gfxSetup = GfxSetup::Fullscreen(1280, 720, windowTitle);
-	} else {
-		gfxSetup = GfxSetup::Window(1280, 720, windowTitle );
 	}
-    Gfx::Setup(gfxSetup);
+	else {
+		gfxSetup = GfxSetup::Window(1280, 720, windowTitle);
+	}
+	Gfx::Setup(gfxSetup);
 
-	renderPassMultisample = Gfx::QueryFeature(GfxFeature::MSAARenderTargets) ? 4 : 1;
-	//renderPassMultisample = 8;
+	if (!Gfx::QueryFeature(GfxFeature::MSAARenderTargets)) {
+		cfg.renderPassMultisample = 1;
+	}
 
     this->uiAssets = Memory::New<UIAssets>();
     this->uiAssets->SetupUI();
@@ -105,6 +111,7 @@ DarkStarApp::OnInit() {
         music.setLooping(true);
 
 		//soloud.play( music );
+		//soloud.setVolume(hmusic, settings->musicVolume);
 		musicPlaying = 0;
     });
     /*
@@ -154,7 +161,7 @@ DarkStarApp::OnInit() {
     
     // Load the scenes
     gameScene = Memory::New<Scene>();
-    gameScene->Setup( &gfxSetup, renderPassMultisample );
+    gameScene->Setup( &gfxSetup, cfg.renderPassMultisample );
     
     gameScene->LoadScene( "TEST_StuffB",[this](bool success) {
         onSceneLoaded();
@@ -195,7 +202,7 @@ DarkStarApp::OnInit() {
     
     //    }
 
-	renderizer = Memory::New<Renderizer>( gameScene->meshLayout, &gfxSetup, renderPassMultisample);
+	renderizer = Memory::New<Renderizer>( gameScene->meshLayout, &gfxSetup, cfg.renderPassMultisample );
     
     dbgDraw = new DebugDrawRenderer();
     dbgDraw->Setup( renderizer->mainRenderSetup );

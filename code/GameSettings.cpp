@@ -27,8 +27,6 @@ GameSettings GameSettings::DefaultLowSpecSettings()
     GameSettings settings = GameSettings();
     settings.renderPassMultisample = 1;
     settings.useSimpleBackground = true;
-    settings.tileSubdivLevel = 4;
-    settings.tileTextureRes = 128;
     
     return settings;
 }
@@ -39,8 +37,6 @@ GameSettings GameSettings::DefaultHighSpecSettings()
     
     settings.renderPassMultisample = 4;
     settings.useSimpleBackground = false;
-    settings.tileSubdivLevel = 5;
-    settings.tileTextureRes = 256;
     
     return settings;
 }
@@ -80,8 +76,6 @@ void GameSettings::WriteConfigFile( const char *filename )
     fprintf( fp, "[Graphics]\n");
     fprintf( fp, "MultisampleCount = %d\n", renderPassMultisample );
     fprintf( fp, "UseSimpleBackground = %s\n", useSimpleBackground?"true":"false" );
-    fprintf( fp, "TileSubdivLevel = %d\n", tileSubdivLevel );
-    fprintf( fp, "TileTextureRes = %d\n", tileTextureRes );
     
     fprintf( fp, "MusicEnabled = %s\n", musicEnabled?"true":"false" );
     fprintf( fp, "MusicVolume = %3.2f\n", musicVolume );
@@ -107,12 +101,10 @@ static int ini_configline_handler(void* userdata, const char* section, const cha
         else if ( !strcasecmp( name, "UseSimpleBackground" ) ) {
             settings->useSimpleBackground = ParseConfigBool( value, settings->useSimpleBackground );
         }
-        else if ( !strcasecmp( name, "TileSubdivLevel" ) ) {
-            settings->tileSubdivLevel = ParseConfigInt( value, 1, 5, settings->tileSubdivLevel );
-        }
-        else if ( !strcasecmp( name, "TileTextureRes" ) ) {
-            settings->tileTextureRes = ParseConfigInt( value, 16, 1024, settings->tileTextureRes );
-        }
+        //else if ( !strcasecmp( name, "TileSubdivLevel" ) ) {
+        //    settings->tileSubdivLevel = ParseConfigInt( value, 1, 5, settings->tileSubdivLevel );
+        //}
+ 
     }
     // Audio Options
     else if (!strcmp( section, "Audio")) {

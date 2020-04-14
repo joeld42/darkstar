@@ -2,15 +2,13 @@ fips_begin_app(darkstar windowed)
     fips_files(DarkStar-Main.cpp 
     	       DarkStarApp.h DarkStarApp.cpp
     		  SceneObject.cpp SceneObject.h
-	          #SceneCoordinator.cpp SceneCoordinator.h
-	          #SceneController.cpp SceneController.h 
-	          #GameScene.cpp GameScene.h
-	          #TitleScene.cpp TitleScene.h
+	          GameSettings.cpp GameSettings.h
 	          Renderizer.h Renderizer.cpp
 	          Camera.h Camera.cpp
 	          Ray.h Ray.cpp
 	          UIAssets.h UIAssets.cpp	          
-	          DebugDraw.cpp DebugDraw.h debug_draw_impl.h	          
+	          DebugDraw.cpp DebugDraw.h debug_draw_impl.h
+	          ini.c ini.h     
 	          stb_image.h
 	          par_easings.h
 

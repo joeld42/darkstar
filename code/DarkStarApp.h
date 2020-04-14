@@ -29,6 +29,7 @@
 #include "Camera.h"
 #include "SceneObject.h"
 #include "Renderizer.h"
+#include "GameSettings.h"
 #include "DebugDraw.h"
 #include "UIAssets.h"
 
@@ -60,7 +61,7 @@ private:
     float angleX = 0.0f;
     float angleY = 0.0f;
     
-	int renderPassMultisample;
+	GameSettings cfg;
     Oryol::GfxSetup gfxSetup;
     Oryol::PassAction passAction;
         
