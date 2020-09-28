@@ -91,11 +91,13 @@ Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout,
 	}
 
 	// Set up the offscreen render target
-	
-		float renderDownscale = 1;
+	float renderDownscale = 1.0f;
+	int mainRenderWidth = (int)(1280 * renderDownscale);
+	int mainRenderHeight = (int)(720 * renderDownscale);
+		
 		mainRenderSetup = TextureSetup::RenderTarget2D(
-			(int)(1280 * renderDownscale),
-			(int)(720 * renderDownscale), PixelFormat::RGBA16F, PixelFormat::DEPTHSTENCIL );
+			mainRenderWidth, mainRenderHeight, 
+			PixelFormat::RGBA16F, PixelFormat::DEPTHSTENCIL );
 		mainRenderSetup.SampleCount = mainRenderSampleCount;
 
 		mainRenderSetup.Sampler.MinFilter = TextureFilterMode::Linear;
@@ -105,9 +107,25 @@ Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout,
 
 		this->mainRenderTarget = Gfx::CreateResource(mainRenderSetup);
 
+
+		// Render Target for depth and Normal info
+		gbuffRenderSetup = TextureSetup::RenderTarget2D(
+			mainRenderWidth, mainRenderHeight,
+			PixelFormat::RGBA16F, PixelFormat::None);
+		gbuffRenderSetup.SampleCount = mainRenderSampleCount;
+
+		this->gbuffRenderTarget = Gfx::CreateResource(gbuffRenderSetup);
+
+
+		//PassSetup mainRenderPassSetup = PassSetup::From(
+		//	this->mainRenderTarget,  // color target
+		//	this->mainRenderTarget); // depth target
+
+		//PassSetup::From({ rt0, rt1, rt2 }, rt0);
 		PassSetup mainRenderPassSetup = PassSetup::From(
-			this->mainRenderTarget,  // color target
-			this->mainRenderTarget); // depth target
+			{ this->mainRenderTarget, this->gbuffRenderTarget },
+			this->mainRenderTarget // Use depth attachment in main target
+		);
 
 		mainRenderPassSetup.DefaultAction = PassAction::Clear(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), 1.0f, 0);
 		this->mainRenderPass = Gfx::CreateResource(mainRenderPassSetup);
@@ -116,7 +134,7 @@ Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout,
 
 	// Set up the background render target
 	{
-		float bgRenderDownscale = 0.5;
+		float bgRenderDownscale = 0.25;
 		backgroundRenderSetup = TextureSetup::RenderTarget2D(
 			(int)(1280 * bgRenderDownscale),
 			(int)(720 * bgRenderDownscale), PixelFormat::RGBA16F, PixelFormat::None);
@@ -152,6 +170,7 @@ Renderizer::Renderizer(  const Oryol::VertexLayout &meshLayout,
 		psBGQuad.RasterizerState.SampleCount = mainRenderSetup.SampleCount;
 		psBGQuad.BlendState.ColorFormat = mainRenderSetup.ColorFormat;
 		psBGQuad.BlendState.DepthFormat = mainRenderSetup.DepthFormat;
+		psBGQuad.BlendState.MRTCount = 2;
 		this->bgquadDrawState.Pipeline = Gfx::CreateResource(psBGQuad);
 	}
 
@@ -215,6 +234,7 @@ void Renderizer::renderScene(Tapnik::Scene* scene, Tapnik::UIAssets* uiAssets)
 	bgquadFSParams.offs = glm::vec2(0.0, 0.0);
 
 	this->bgquadDrawState.FSTexture[BGQuadShader::tex] = backgroundRenderTarget;
+	//this->bgquadDrawState.FSTexture[BGQuadShader::tex] = backgroundRenderTarget;
 	Gfx::ApplyDrawState(this->bgquadDrawState);
 	Gfx::ApplyUniformBlock(this->bgquadFSParams);
 	Gfx::Draw();
@@ -237,6 +257,7 @@ void Renderizer::finishMainPass()
 	postProcFSparams.size = glm::vec2(1.0f, 1.0f);
 	postProcFSparams.offs = glm::vec2(0.0, 0.0);
 	this->postProcDrawState.FSTexture[PostProcShader::tex] = mainRenderTarget;
+	this->postProcDrawState.FSTexture[PostProcShader::depthTex] = gbuffRenderTarget;
 	Gfx::ApplyDrawState(this->postProcDrawState);
 	Gfx::ApplyUniformBlock(this->postProcFSparams);
 	Gfx::Draw();

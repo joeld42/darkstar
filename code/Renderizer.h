@@ -57,6 +57,8 @@ namespace Tapnik
 
 		// Offscreen render pass (pre-color-corrected)
 		Oryol::TextureSetup mainRenderSetup;
+		Oryol::TextureSetup gbuffRenderSetup;
+		Oryol::Id gbuffRenderTarget;
 		Oryol::Id mainRenderTarget;
 		Oryol::Id mainRenderPass;
 		

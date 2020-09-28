@@ -98,6 +98,8 @@ out vec2 uv;
 out vec4 color;
 out vec4 nrm_ws;
 out vec4 lightProjPos;
+out vec4 fragP;
+out vec4 fragN;
 
 //out vec4 nrm_ws;
 //out vec4 lightProjPos;
@@ -105,7 +107,7 @@ out vec4 lightProjPos;
 //out vec4 world_nrm;
 
 void main() {
-    gl_Position = mvp * position;
+    fragP = gl_Position = mvp * position;
     lightProjPos = lightMVP * position;
     //lightDir = vec4( normalize(vec3( 0.4, 0.1, 1.0)), 0.0);
 
@@ -114,6 +116,7 @@ void main() {
     //world_nrm = normal;
     //nrm = normalize(mvp * vec4(normal.xyz,0) );
     nrm_ws = normalize( modelview * vec4( normal.xyz,0) );
+	fragN = mvp * vec4( normal.xyz,0);
     
     color = tintColor;
     //decalTintColor = decalTint;
@@ -131,6 +134,8 @@ uniform sampler2D shadowMap;
 //uniform sampler2D texDecal;
 
 in vec2 uv;
+in vec4 fragP;
+in vec4 fragN;
 in vec4 color;
 in vec4 nrm_ws;
 in vec4 lightProjPos;
@@ -138,7 +143,9 @@ in vec4 lightProjPos;
 //in vec4 lightDir;
 //in vec4 world_nrm;
 
-out vec4 fragColor;
+//out vec4 fragColor;
+layout(location=0) out vec4 fragColor0;
+layout(location=1) out vec4 gbuffColor;
 
 void main() {
     vec4 c = texture(tex, uv );
@@ -157,7 +164,13 @@ void main() {
     vec3 lightDir = normalize(vec3( 0.4, 0.1, 1.0) );
 	float nDotL = clamp( dot( lightDir, nrm_ws.xyz ), 0, 1);
 	vec3 lightCol = mix( vec3(0.1,0.12,0.2), vec3(1.1), nDotL );
-    fragColor = applyShadow( shadowMap, vec4(cBaseColor * lightCol, 1.0), lightProjPos );
+    fragColor0 = applyShadow( shadowMap, vec4(cBaseColor * lightCol, 1.0), lightProjPos );
+	
+	
+	//gbuffColor = vec4( vec3( abs(sin(fragP.z)) ), 1.0 ) ;
+	gbuffColor = fragP;
+	
+
     //fragColor = applyShadow( shadowMap, vec4( lightCol, 1.0), lightProjPos );
     
     //fragColor = vec4( (lightDir.xyz * 0.5) + vec3(0.5), 1.0 );
