@@ -30,6 +30,7 @@
 #include "SceneObject.h"
 #include "Renderizer.h"
 #include "GameSettings.h"
+#include "DebugTools.h"
 #include "DebugDraw.h"
 #include "UIAssets.h"
 
@@ -66,9 +67,9 @@ private:
     Oryol::PassAction passAction;
         
     // Debug mode stuff
-    bool debugMode;
+	DebugTools* debugTools;
     Tapnik::Camera gameCamera;
-    Tapnik::Camera dbgCamera;
+    //Tapnik::Camera dbgCamera;
     Tapnik::DebugDrawRenderer *dbgDraw;
     int activeCameraIndex = 0;
     

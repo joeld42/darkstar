@@ -154,10 +154,10 @@ DarkStarApp::OnInit() {
     // setup clear states
     this->passAction.Color[0] = glm::vec4( 0.2, 0.2, 0.2, 1.0 );
     
-    dbgCamera = {};
-    dbgCamera.Setup(glm::vec3(0.0, 0.0, 25.0), glm::radians(45.0f),
-                    uiAssets->fbWidth,
-                    uiAssets->fbHeight, 0.01f, 100.0f);
+    //dbgCamera = {};
+    //dbgCamera.Setup(glm::vec3(0.0, 0.0, 25.0), glm::radians(45.0f),
+    //                uiAssets->fbWidth,
+    //                uiAssets->fbHeight, 0.01f, 100.0f);
     
     // Load the scenes
     gameScene = Memory::New<Scene>();
@@ -207,9 +207,15 @@ DarkStarApp::OnInit() {
     dbgDraw = new DebugDrawRenderer();
     dbgDraw->Setup( renderizer->mainRenderSetup );
     dd::initialize( dbgDraw );    
+
+	// Setup debug mode tools
+	debugTools = Memory::New<DebugTools>();
     
     this->lastTimePoint = Clock::Now();
     this->startTimePoint = this->lastTimePoint;
+
+	debugTools->Setup(uiAssets );
+	Log::Info("set up debugTool\n");
     
     return App::OnInit();
 }
@@ -229,7 +235,7 @@ DarkStarApp::OnRunning() {
     // Update clocks
     frameDtRaw = Clock::LapTime(this->lastTimePoint);
     
-    Camera *activeCamera = debugMode?&dbgCamera:&gameCamera;
+	Camera* activeCamera = debugTools->debugMode ? &(debugTools->dbgCamera) : &gameCamera;
     
 	renderizer->activeCamera = activeCamera;
 
@@ -256,10 +262,10 @@ DarkStarApp::OnRunning() {
     dbgDraw->debugDrawOrthoMVP = glm::ortho(0.0f, uiAssets->fbWidth, uiAssets->fbHeight, 0.0f );
     //Gfx::ApplyDefaultRenderTarget(this->mainClearState);
     
-    if (debugMode)
-    {
-        this->handleInputDebug();
-    }
+	if (debugTools)
+	{
+		debugTools->handleInputDebug();
+	}
 
 	// Maybe move this to debug tools??
 	if (Input::KeyDown(Key::P)) {
@@ -276,11 +282,13 @@ DarkStarApp::OnRunning() {
         dd::cross(boxCenter, 1.0f);
     
     if (Input::KeyDown(Key::Tab)) {
-        debugMode = !debugMode;
-        Log::Info( "Debug Mode: %s\n", debugMode?"ON":"OFF" );
+		Log::Info("Toggle debug mode...\n");
+		debugTools->ToggleDebugMode();
+        //Log::Info( "Debug Mode: %s\n", debugMode?"ON":"OFF" );
 
     }
-    if (debugMode) {
+
+	if (debugTools->debugMode) {
         ddVec3 textPos2D = { 0.0f, 20.0f, 0.0f };
         textPos2D[0] = uiAssets->fbWidth / 2.0;
         dd::screenText("Debug Mode", textPos2D, dd::colors::Orange );
@@ -305,8 +313,16 @@ DarkStarApp::OnRunning() {
     
     Dbg::DrawTextBuffer();
  
+	if (debugTools) {
+		Log::Info("Updating debugTools\n");
+		debugTools->OnRunning(frameDt);
+
+		debugTools->DebugRender();
+	}
+
 	renderizer->finishRender( uiAssets );
 
+	
     Gfx::CommitFrame();
     
     // continue running or quit?
@@ -340,7 +356,7 @@ DarkStarApp::handleInputDebug() {
         
         if (Input::KeyDown(Key::C)) {
             
-            dbgCamera.Setup(glm::vec3(0.0, 0.0, 15.0), glm::radians(45.0f),
+            debugTools->dbgCamera.Setup(glm::vec3(0.0, 0.0, 15.0), glm::radians(45.0f),
                             uiAssets->fbWidth,
                             uiAssets->fbHeight, 1.0f, 1000.0f);
         }
@@ -367,7 +383,7 @@ DarkStarApp::handleInputDebug() {
             rot = Input::TouchMovement(0) * glm::vec2(-0.01f, 0.01f);
         }
     }
-    dbgCamera.MoveRotate(move, rot);
+    //dbgCamera.MoveRotate(move, rot);
 }
 
 // =======================================================================================

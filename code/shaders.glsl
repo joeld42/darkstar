@@ -143,7 +143,7 @@ in vec4 lightProjPos;
 //in vec4 lightDir;
 //in vec4 world_nrm;
 
-//out vec4 fragColor;
+//out vec4 fragColor; 
 layout(location=0) out vec4 fragColor0;
 layout(location=1) out vec4 gbuffColor;
 

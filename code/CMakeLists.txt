@@ -8,6 +8,7 @@ fips_begin_app(darkstar windowed)
 	          Ray.h Ray.cpp
 	          UIAssets.h UIAssets.cpp	          
 	          DebugDraw.cpp DebugDraw.h debug_draw_impl.h
+			  DebugTools.cpp DebugTools.h
 	          ini.c ini.h     
 	          stb_image.h
 	          par_easings.h
@@ -18,5 +19,5 @@ fips_begin_app(darkstar windowed)
     oryol_shader(postproc.glsl)
     oryol_shader(background.glsl)
     oryol_shader(wireframe_shaders.glsl)
-    fips_deps(Core IO LocalFS HttpFS Gfx Assets NKUI Dbg Input soloud)
+    fips_deps(Core IO LocalFS HttpFS Gfx Assets IMUI NKUI Dbg Input soloud)
 fips_end_app()

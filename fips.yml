@@ -12,8 +12,8 @@ imports:
         #branch: resource-path-fix
     #oryol-tbui:
     #    git: https://github.com/floooh/oryol-tbui.git
-    #oryol-imgui:
-    #   git: https://github.com/floooh/oryol-imgui.git
+    oryol-imgui:
+       git: https://github.com/floooh/oryol-imgui.git
     oryol-nuklear:
         git: https://github.com/floooh/oryol-nuklear.git
     #oryol-sound:
